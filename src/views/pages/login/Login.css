@@ -1,0 +1,196 @@
+.login-container {
+  background: #f5f6f7;
+}
+
+.left-panel {
+  background: #eef2f5;
+  padding: 40px;
+}
+
+.company-logo {
+  height: 40px;
+  object-fit: contain;
+}
+
+.header-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.divider {
+  width: 1px;
+  height: 40px;
+  background: #ccc;
+}
+
+.bin-text {
+  color: #5bb318;
+  font-weight: bold;
+}
+
+.steps-container {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.step-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 12px;
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.step-card img {
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.step-card h6 {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.step-card p {
+  font-size: 11px;
+  color: #777;
+}
+
+.step-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #f0ad4e;
+  color: white;
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Colors */
+.step-badge.blue { background: #007bff; }
+.step-badge.green { background: #28a745; }
+.step-badge.orange { background: #f39c12; }
+
+.features {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.feature-item img {
+  width: 35px;
+  height: 35px;
+  object-fit: contain;
+}
+.right-panel {
+  background: #274472;
+}
+
+.login-box {
+  width: 80%;
+  color: white;
+}
+
+.avatar-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.login-btn {
+  background: #5bb318 !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.login-btn:hover,
+.login-btn:focus,
+.login-btn:active {
+  background: #5bb318 !important;   /* same color */
+  color: white !important;
+  box-shadow: none !important;
+}
+.footer-text {
+  font-size: 12px;
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  color: white;
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  .steps-container {
+    flex-wrap: wrap;
+  }
+
+  .step-card {
+    flex: 45%;
+  }
+
+  .features {
+    justify-content: center;
+  }
+}
+
+/* MOBILE FIX - FULL LOGIN SCREEN */
+@media (max-width: 768px) {
+
+  .left-panel {
+    display: none !important;
+  }
+
+  .right-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100%;
+    background: #274472;
+  }
+
+  .login-container {
+    height: 100vh;
+    background: #274472;
+  }
+
+  .login-box {
+    width: 90%;
+    margin: auto;
+  }
+
+  .right-panel {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}

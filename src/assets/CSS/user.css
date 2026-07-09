@@ -1,0 +1,116 @@
+/* ===== TABLE HEADER ===== */
+.rdt_TableHeadRow {
+  background-color: #cfd3df !important;
+  font-weight: 600;
+  font-size: 16px;
+  min-height: 50px;
+}
+
+.rdt_TableCol {
+  justify-content: center !important;
+  text-align: center;
+}
+
+/* ===== TABLE ROW ===== */
+.rdt_TableRow {
+  font-size: 22px;
+}
+
+/* ===== TABLE CELL ALIGN ===== */
+.rdt_TableCell {
+  justify-content: center !important;
+  text-align: center;
+  display: flex;
+  align-items: center;
+}
+
+/* ===== ACTION ICONS ===== */
+.action-icon {
+  cursor: pointer;
+  margin: 0 6px;
+  font-size: 16px;
+  /* 👈 slightly bigger */
+}
+
+.edit-icon {
+  color: #4a90e2;
+}
+
+.delete-icon {
+  color: #e74c3c;
+}
+
+.user-icon {
+  color: #2c3e50;
+}
+
+/* ===== PAGINATION ALIGN ===== */
+.rdt_Pagination {
+  justify-content: flex-end !important;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.privilege-table th {
+  text-align: center;
+  font-weight: 600;
+  padding: 10px;
+}
+
+
+
+.privilege-table thead th {
+  background-color: #87acf7 !important;
+}
+
+/* Group Header */
+.group-row td {
+  background: #e3eaf6;
+  font-weight: 600;
+  text-align: left;
+  padding-left: 10px;
+}
+
+/* Menu Cell */
+.menu-cell {
+  text-align: left;
+  padding-left: 15px;
+  font-weight: 500;
+}
+
+/* Icon spacing */
+.menu-cell svg {
+  color: #4a90e2;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.breadcrumb-wrapper {
+  display: flex;
+  justify-content: center;
+  /* 🔥 center horizontally */
+  align-items: center;
+  width: 100%;
+}
+
+/* remove default margin/padding issue */
+.breadcrumb {
+  margin-bottom: 0;
+  background: transparent;
+}
+
+/* text style */
+.breadcrumb-item {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+}

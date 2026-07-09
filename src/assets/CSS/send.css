@@ -1,0 +1,237 @@
+.send-page .wsummary-container {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+/* COMMON CARD */
+.send-page .summary-card {
+  flex: 1;
+  padding: 18px;
+  border-radius: 12px;
+  color: #fff;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* ✅ vertical center */
+
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.send-page .summary-card .content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.send-page .summary-card .summary-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 50px;
+  /* ✅ fixed box */
+  height: 50px;
+}
+
+.send-page .summary-card .summary-icon {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+.send-page .summary-card .summary-icon img {
+  width: 40px;
+  /* ✅ PERFECT SIZE */
+  height: 40px;
+  object-fit: contain;
+}
+
+ .send-page .summary-card:hover {
+  transform: translateY(-3px);
+}
+
+/* COLORS (MATCH IMAGE) */
+.send-page .total-card {
+  background: #6c8a89;
+}
+
+.send-page .available-card {
+  background: #6cab2f;
+}
+
+.send-page .damaged-card {
+  background: #e5533d;
+}
+
+.send-page .atcustomer-card {
+  background: #c89c3d;
+}
+
+/* TEXT */
+.send-page .title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.send-page .value {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+/* ICON */
+.send-page .summary-icon {
+  font-size: 26px;
+  opacity: 0.9;
+}
+
+/* ADD BUTTON */
+.send-page .add-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: auto;
+}
+
+
+.send-page .add-text {
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* FORM CARD */
+.send-page .form-card {
+  border-radius: 10px;
+}
+
+/* HEADER */
+.send-page .form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+/* REQUIRED STAR */
+.send-page .req {
+  color: red;
+}
+
+/* GRID */
+.send-page .form-grid label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* REFRESH BUTTON */
+.send-page .refresh-btn {
+  display: flex;
+  align-items: end;
+}
+
+/* LAST SCANNED */
+.send-page .last-scan {
+  text-align: right;
+  color: green;
+  font-weight: 600;
+  margin: 10px 0;
+}
+
+.send-page .last-scan span {
+  font-weight: bold;
+}
+
+/* SCAN BOX */
+.send-page .scan-box {
+  border: 2px dashed #bcd;
+  border-radius: 10px;
+  padding: 25px;
+  margin: 15px 0;
+  background: #eef6fb;
+}
+
+.send-page .scan-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.send-page .scan-inner input {
+  border: none;
+  outline: none;
+  font-size: 16px;
+  width: 250px;
+  background: transparent;
+}
+
+.send-page .scan-icon {
+  font-size: 22px;
+}
+
+/* TABLE TITLE */
+.send-page .table-title {
+  text-align: center;
+  font-weight: 600;
+  margin: 10px 0;
+}
+
+/* ACTION BUTTONS */
+.send-page .form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+
+  .send-page .wsummary-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .send-page .summary-card {
+    width: 100%;
+    min-height: 95px;
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .send-page .summary-card .content {
+    gap: 4px;
+  }
+
+  .send-page .title {
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 600;
+  }
+
+  .send-page .value {
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  .send-page .summary-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .send-page .summary-icon img {
+    width: 22px;
+    height: 22px;
+  }
+
+  .send-page .add-btn {
+    grid-column: span 2;
+    justify-self: center;
+    margin-top: 5px;
+  }
+}

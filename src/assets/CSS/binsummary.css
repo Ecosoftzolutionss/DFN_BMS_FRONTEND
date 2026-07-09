@@ -1,0 +1,7 @@
+@media (max-width: 768px) {
+  .position-relative > div {
+    position: static !important;
+    justify-content: center;
+    margin-top: 10px;
+  }
+}
