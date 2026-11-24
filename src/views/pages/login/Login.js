@@ -99,6 +99,29 @@ const Login = () => {
 
       toast.success('Login Successful')
 
+      // Storage info (optional) - runs in background, never blocks login/redirect
+      API.get('/Auth/storage')
+        .then((storageRes) => {
+          const data = storageRes.data
+
+          toast.info(
+            <div>
+              <div><strong>Database:</strong> {data.databaseName}</div>
+              <div><strong>Size:</strong> {data.databaseSizeMB} MB</div>
+              <div><strong>Free:</strong> {data.databaseFreeMB} MB</div>
+
+              {(data.drives || []).map((d, index) => (
+                <div key={index}>
+                  <strong>{d.drive}:</strong> {d.freeSpaceGB} GB Free / {d.totalSpaceGB} GB
+                </div>
+              ))}
+            </div>,
+            { autoClose: 5000 },
+          )
+        })
+        .catch((storageErr) => {
+          console.log('Storage info error', storageErr)
+        })
 
       if (isMobile) {
         navigate('/m/send');

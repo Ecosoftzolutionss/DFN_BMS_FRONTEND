@@ -65,8 +65,10 @@ const Receive = () => {
     });
     const [showTransactionModal, setShowTransactionModal] = useState(false)
     const [transactionBins, setTransactionBins] = useState([])
-    const [selectedPartNo, setSelectedPartNo] = useState('')
+    const [selectedTransaction, setSelectedTransaction] = useState(null)
     const [transactionSearch, setTransactionSearch] = useState('')
+    const [pendingScan, setPendingScan] = useState(null)
+    const [showMismatchPopup, setShowMismatchPopup] = useState(false)
     const { privileges } = usePrivilege()
     const partPrivilege = privileges.find(p => p.menuName === 'Part') || {}
 
@@ -143,6 +145,61 @@ const Receive = () => {
     }
 
 
+    // ✅ ADD ONE SCANNED BIN TO THE GRID
+    const addScannedRow = (binNo, partNo, customerId, customerName) => {
+        const vehicle = vehicles.find(v => v.id == form.vehicleId)
+
+        const newRow = {
+            partNo,
+            binNo,
+            customerId,
+            customerName: customerName || '',
+            vehicleId: form.vehicleId,
+            referenceNo: form.referenceNo,
+            vehicleNo:
+                vehicle?.vehicleNo ||
+                form.vehicleNoInput ||
+                '',
+            driverName: form.driverName,
+            driverNo: form.driverNo,
+            condition: form.condition,
+            remarks: form.remarks,
+            scanDateTime: new Date().toLocaleString()
+        }
+
+        setBinList(prev => {
+            if (prev.some(x => x.binNo === binNo)) {
+                return prev
+            }
+            return [...prev, newRow]
+        })
+        setLastScanned(binNo)
+        setIsLocked(true)
+    }
+
+    // ✅ USER CONFIRMED: label belongs to another customer
+    // the bin is saved under the customer it was actually sent to,
+    // so it becomes its own transaction
+    const confirmMismatch = () => {
+        if (pendingScan && !binList.some(x => x.binNo === pendingScan.binNo)) {
+            addScannedRow(
+                pendingScan.binNo,
+                pendingScan.partNo,
+                pendingScan.customerId,
+                pendingScan.customerName
+            )
+        }
+        setShowMismatchPopup(false)
+        setPendingScan(null)
+        setTimeout(() => scanRef.current?.focus(), 100)
+    }
+
+    const cancelMismatch = () => {
+        setShowMismatchPopup(false)
+        setPendingScan(null)
+        setTimeout(() => scanRef.current?.focus(), 100)
+    }
+
     const processScan = async (value) => {
 
         // ✅ PREVENT DOUBLE SCAN
@@ -205,33 +262,27 @@ const Receive = () => {
                 return
             }
 
-            const vehicle = vehicles.find(v => v.id == form.vehicleId)
-            const newRow = {
-                partNo: res.data.partNo,
-                binNo: value,
-                customerId: form.customerId,
-                vehicleId: form.vehicleId,
-                referenceNo: form.referenceNo,
-                vehicleNo:
-                    vehicle?.vehicleNo ||
-                    form.vehicleNoInput ||
-                    '',
-                driverName: form.driverName,
-                driverNo: form.driverNo,
-                condition: form.condition,
-                remarks: form.remarks,
-                scanDateTime: new Date().toLocaleString()
+            // ✅ LABEL BELONGS TO ANOTHER CUSTOMER - ask before adding
+            if (res.data.requiresConfirmation) {
+                setPendingScan({
+                    binNo: value,
+                    partNo: res.data.partNo,
+                    customerId: res.data.belongsToCustomerId,
+                    customerName: res.data.belongsToCustomerName,
+                    message: res.data.message
+                })
+                setShowMismatchPopup(true)
+                return
             }
 
-            // ✅ SAFE STATE UPDATE
-            setBinList(prev => {
-                if (prev.some(x => x.binNo === value)) {
-                    return prev
-                }
-                return [...prev, newRow]
-            })
-            setLastScanned(value)
-            setIsLocked(true)
+            const selectedCustomer = customers.find(c => c.id == form.customerId)
+
+            addScannedRow(
+                value,
+                res.data.partNo,
+                form.customerId,
+                selectedCustomer?.customerName
+            )
 
         } catch (err) {
             console.error(err)
@@ -281,8 +332,6 @@ const Receive = () => {
                         vehicleId: x.vehicleId
                             ? Number(x.vehicleId)
                             : 0,
-
-                        vehicleNoInput: form.vehicleNoInput || '',
 
                         vehicleNoInput: form.vehicleNoInput || '',
                         driverName: x.driverName,
@@ -375,8 +424,9 @@ const Receive = () => {
             setShowForm(false)   // or true (your choice)
         }
 
-        loadAll()
+        await loadAll()
         setShowDeleteModal(false)
+        setShowTransactionModal(false)
     }
 
     // ✅ CLEAR
@@ -403,59 +453,33 @@ const Receive = () => {
 
         scanRef.current?.focus();
     }
-    const latestBin = data.length > 0 ? data[0].binNo : ''
-
-    // ✅ FILTER
+    // ✅ FILTER (one row per receive transaction, same as Send)
     const filteredData = data.filter(item =>
-        item.binNo?.toLowerCase().includes(search.toLowerCase()) ||
-        item.referenceNo?.toLowerCase().includes(search.toLowerCase())
+        item.transactionId?.toString().includes(search) ||
+        item.customerName?.toLowerCase().includes(search.toLowerCase()) ||
+        item.referenceNo?.toLowerCase().includes(search.toLowerCase()) ||
+        item.vehicleNo?.toLowerCase().includes(search.toLowerCase()) ||
+        item.driverName?.toLowerCase().includes(search.toLowerCase()) ||
+        item.driverNo?.toString().includes(search)
     )
 
-    // ✅ TABLE
-
-    const groupedData = Object.values(
-
-        filteredData.reduce((acc, item) => {
-
-            if (!acc[item.partNo]) {
-
-                acc[item.partNo] = {
-                    partNo: item.partNo,
-                    binCount: 0
-                }
-            }
-
-            acc[item.partNo].binCount += 1
-
-            return acc
-
-        }, {})
-    )
-
-    const openPartBins = (partNo) => {
-
-        setTransactionSearch('')
-
-        const filtered = data.filter(x => x.partNo === partNo)
-
-        setTransactionBins(filtered)
-
-        setSelectedPartNo(partNo)
-
-        setShowTransactionModal(true)
+    // ✅ OPEN BINS OF ONE TRANSACTION
+    const openTransaction = async (batchId) => {
+        try {
+            setTransactionSearch('')
+            const res = await API.get(`/receive/transaction-details/${batchId}`)
+            setTransactionBins(res.data)
+            setSelectedTransaction(batchId)
+            setShowTransactionModal(true)
+        } catch (err) {
+            toast.error('Failed to load transaction')
+        }
     }
 
     const filteredTransactionBins = transactionBins.filter(item =>
-
-        item.partNo?.toLowerCase().includes(transactionSearch.toLowerCase())
-
-        ||
-
+        item.partNo?.toString().toLowerCase().includes(transactionSearch.toLowerCase()) ||
+        item.binMaterialType?.toLowerCase().includes(transactionSearch.toLowerCase()) ||
         item.binNo?.toLowerCase().includes(transactionSearch.toLowerCase())
-
-        ||
-
-        item.referenceNo?.toLowerCase().includes(transactionSearch.toLowerCase())
     )
     // const columns = [
     //     { name: 'S.No', selector: (r, i) => i + 1 },
@@ -504,43 +528,62 @@ const Receive = () => {
     // ]
 
     const columns = [
-
         {
-            name: 'S.No',
-
-            selector: (row, index) =>
-                (currentPage - 1) * rowsPerPage + index + 1,
-
-            width: '90px'
-        },
-
-        {
-            name: 'Part No',
-
+            name: 'Transaction ID',
+            width: '200px',
             cell: row => (
-
                 <span
                     style={{
                         color: '#0d6efd',
                         cursor: 'pointer',
                         fontWeight: '600'
                     }}
-                    onClick={() => openPartBins(row.partNo)}
+                    onClick={() => openTransaction(row.transactionId)}
                 >
-                    {row.partNo}
+                    {row.transactionId}
                 </span>
             )
         },
-
+        {
+            name: 'Customer Name',
+            selector: r => r.customerName,
+            width: '220px'
+        },
         {
             name: 'Packages Count',
             selector: r => r.binCount,
-            style: {
-                justifyContent: 'center'
+            width: '200px',
+            center: true
+        },
+        {
+            name: 'Reference No',
+            selector: r => r.referenceNo,
+            width: '200px'
+        },
+        {
+            name: 'Vehicle No',
+            selector: r => r.vehicleNo
+        },
+        {
+            name: 'Driver Name',
+            selector: r => r.driverName,
+            width: '200px'
+        },
+        {
+            name: 'Driver No',
+            selector: r => r.driverNo
+        },
+        {
+            name: 'Receive Date',
+            cell: r => {
+                const d = new Date(r.scanDateTime)
+
+                return `${d.getDate().toString().padStart(2, '0')}-` +
+                    `${(d.getMonth() + 1).toString().padStart(2, '0')}-` +
+                    `${d.getFullYear()} ` +
+                    `${d.toLocaleTimeString()}`
             },
-            headStyle: {
-                justifyContent: 'center'
-            }
+            width: '300px'
         }
     ]
 
@@ -592,6 +635,53 @@ const Receive = () => {
                 </CModalFooter>
             </CModal>
 
+
+            <CModal
+                visible={showMismatchPopup}
+                onClose={cancelMismatch}
+                alignment="center"
+                backdrop="static"
+            >
+                <CModalHeader className="border-0 pb-0">
+                    <CModalTitle className="w-100 text-center fw-bold text-danger">
+                        ⚠ Different Customer
+                    </CModalTitle>
+                </CModalHeader>
+
+                <CModalBody className="text-center pt-2">
+                    <div style={{ fontSize: '18px', marginBottom: '12px' }}>
+                        Package
+                        <span style={{ color: '#dc3545', fontWeight: 'bold', marginLeft: '6px' }}>
+                            {pendingScan?.binNo}
+                        </span>
+                    </div>
+                    <div style={{ fontSize: '16px', color: '#555' }}>
+                        {pendingScan?.message}
+                    </div>
+                    <div style={{ marginTop: '12px', fontSize: '16px' }}>
+                        Belongs to: <b>{pendingScan?.customerName}</b>
+                    </div>
+                </CModalBody>
+
+                <CModalFooter className="border-0 justify-content-center">
+                    <CButton
+                        color="secondary"
+                        size="lg"
+                        style={{ minWidth: '120px', fontWeight: '600' }}
+                        onClick={cancelMismatch}
+                    >
+                        No
+                    </CButton>
+                    <CButton
+                        color="success"
+                        size="lg"
+                        style={{ minWidth: '120px', fontWeight: '600' }}
+                        onClick={confirmMismatch}
+                    >
+                        Yes
+                    </CButton>
+                </CModalFooter>
+            </CModal>
 
             {!showForm && (
                 <CCard className="mb-3 summary-wrapper">
@@ -1037,7 +1127,7 @@ const Receive = () => {
 
                         <DataTable
                             columns={columns}
-                            data={groupedData}
+                            data={filteredData}
                             pagination
                             paginationServer
                             highlightOnHover
@@ -1047,10 +1137,6 @@ const Receive = () => {
                             onChangePage={(page) => {
                                 setCurrentPage(page)
                                 loadAll(page)
-                            }}
-                            onChangeRowsPerPage={(newPerPage, page) => {
-                                setRowsPerPage(newPerPage)
-                                setCurrentPage(page)
                             }}
                             customStyles={customStyles}
                             persistTableHead
@@ -1078,6 +1164,7 @@ const Receive = () => {
 
                                 { name: 'Part No', selector: r => r.partNo },
                                 { name: 'Packages No', selector: r => r.binNo },
+                                { name: 'Customer', selector: r => r.customerName },
                                 { name: 'Reference No', selector: r => r.referenceNo, width: '200px' },
                                 { name: 'Vehicle No', selector: r => r.vehicleNo },
                                 { name: 'Driver Name', selector: r => r.driverName },
@@ -1133,7 +1220,6 @@ const Receive = () => {
             <CModal
                 visible={showTransactionModal}
                 size="xl"
-                fullscreen="xl"
 
                 onClose={() => {
                     setShowTransactionModal(false)
@@ -1142,7 +1228,7 @@ const Receive = () => {
             >
                 <CModalHeader>
                     <CModalTitle>
-                        📦 Part No : {selectedPartNo}
+                        📦 Transaction #{selectedTransaction} Bin Details
                     </CModalTitle>
                 </CModalHeader>
 
@@ -1172,37 +1258,19 @@ const Receive = () => {
                             {
                                 name: 'Part No',
                                 cell: r => tooltipCell(r.partNo),
-                                width: '170px'
+                                width: '200px'
+                            },
+
+                            {
+                                name: 'Packages Type',
+                                cell: r => tooltipCell(r.binMaterialType),
+                                width: '200px'
                             },
 
                             {
                                 name: 'Packages No',
                                 cell: r => tooltipCell(r.binNo),
-                                width: '150px'
-                            },
-
-                            {
-                                name: 'Reference No',
-                                cell: r => tooltipCell(r.referenceNo),
-                                width: '180px'
-                            },
-
-                            {
-                                name: 'Vehicle No',
-                                cell: r => tooltipCell(r.vehicleNo),
-                                width: '180px'
-                            },
-
-                            {
-                                name: 'Driver Name',
-                                cell: r => tooltipCell(r.driverName),
-                                width: '180px'
-                            },
-
-                            {
-                                name: 'Driver No',
-                                cell: r => tooltipCell(r.driverNo),
-                                width: '160px'
+                                width: '200px'
                             },
 
                             {

@@ -579,34 +579,31 @@ html,body{
                   Manufacture Date <span style={{ color: 'red' }}>*</span>
                 </label>
                 <CFormInput
-                  type="date"
+  type="date"
 
-                  min={new Date().toISOString().split('T')[0]}
-                  max={new Date().toISOString().split('T')[0]}
+  max={new Date().toISOString().split('T')[0]}
 
-                  value={form.manufactureDate}
+  value={form.manufactureDate}
 
-                  onChange={(e) => {
+  onChange={(e) => {
 
-                    const today =
-                      new Date().toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0]
 
-                    // ✅ ONLY TODAY ALLOWED
-                    if (e.target.value !== today) {
+    // ✅ FUTURE DATE NOT ALLOWED (past and today are allowed)
+    if (e.target.value > today) {
 
-                      toast.error(
-                        'Only today date allowed'
-                      )
+      toast.dismiss()
+      toast.error('Future date not allowed')
 
-                      return
-                    }
+      return
+    }
 
-                    setForm({
-                      ...form,
-                      manufactureDate: e.target.value
-                    })
-                  }}
-                />
+    setForm({
+      ...form,
+      manufactureDate: e.target.value
+    })
+  }}
+/>
               </CCol>
               <CCol xs={12} md={6} lg={3}>
                 <label>Size (L*W*H)</label>

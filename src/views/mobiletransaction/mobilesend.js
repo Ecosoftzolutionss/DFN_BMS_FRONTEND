@@ -84,6 +84,10 @@ const MobileSend = () => {
     const isMobilityWithoutCheck = user?.mobilityWithoutCheck === true
     const { privileges } = usePrivilege()
 
+    // ✅ CUSTOMER-MISMATCH CONFIRMATION (Receive scan)
+    const [showCustomerMismatchModal, setShowCustomerMismatchModal] = useState(false);
+    const [pendingScan, setPendingScan] = useState(null); // { value, partNo, message, belongsToCustomerName }
+
     const sendPrivilege =
         privileges.find(p => p.menuName === 'Send') || {
             canView: false,
@@ -288,6 +292,33 @@ const MobileSend = () => {
         setTimeout(() => scanRef.current?.focus(), 200);
     };
 
+    // ✅ BUILD ROW & ADD TO SEND/RECEIVE GRID (shared by normal scan + "Yes" confirm)
+    const addScanRow = (value, partNo) => {
+        const newItem = {
+            partNo,
+            binNo: value,
+            customerId: form.customerId,
+            vehicleId: form.vehicleId,
+            referenceNo: form.referenceNo,
+            driverName: form.driverName,
+            driverNo: form.driverNo,
+            scanDateTime: new Date().toLocaleString(),
+            condition: 'Good',
+            remarks: ''
+        };
+
+        if (activeTab === 'send') {
+            setSendList(prev => [...prev, newItem]);
+            setLastScannedSend(value);
+        } else {
+            setReceiveList(prev => [...prev, newItem]);
+            setLastScannedReceive(value);
+        }
+
+        // ✅ LOCK HEADER
+        setIsLocked(true);
+    };
+
     // ✅ SCAN
     const processScan = async (value) => {
 
@@ -372,32 +403,20 @@ const MobileSend = () => {
                 return;
             }
 
-            // ✅ NEW ROW
-            const newItem = {
-                partNo: res.data.partNo,
-                binNo: value,
-                customerId: form.customerId,
-                vehicleId: form.vehicleId,
-                referenceNo: form.referenceNo,
-                driverName: form.driverName,
-                driverNo: form.driverNo,
-                scanDateTime: new Date().toLocaleString(),
-                condition: 'Good',
-                remarks: ''
-            };
-
-            // ✅ ADD GRID
-            if (activeTab === 'send') {
-                setSendList(prev => [...prev, newItem]);
-                setLastScannedSend(value);
-
-            } else {
-                setReceiveList(prev => [...prev, newItem]);
-                setLastScannedReceive(value);
+            // ✅ CUSTOMER MISMATCH (Receive only) → ASK FOR CONFIRMATION INSTEAD OF ADDING DIRECTLY
+            if (activeTab === 'receive' && res.data.requiresConfirmation) {
+                setPendingScan({
+                    value,
+                    partNo: res.data.partNo,
+                    message: res.data.message,
+                    belongsToCustomerName: res.data.belongsToCustomerName
+                });
+                setShowCustomerMismatchModal(true);
+                return;
             }
 
-            // ✅ LOCK HEADER
-            setIsLocked(true);
+            // ✅ ADD GRID
+            addScanRow(value, res.data.partNo);
 
         } catch (err) {
 
@@ -420,6 +439,22 @@ const MobileSend = () => {
                 scanRef.current.focus();
             }
         }
+    };
+
+    // ✅ CUSTOMER MISMATCH MODAL HANDLERS
+    const handleMismatchConfirmYes = () => {
+        if (pendingScan) {
+            addScanRow(pendingScan.value, pendingScan.partNo);
+        }
+        setShowCustomerMismatchModal(false);
+        setPendingScan(null);
+        setTimeout(() => scanRef.current?.focus(), 100);
+    };
+
+    const handleMismatchConfirmNo = () => {
+        setShowCustomerMismatchModal(false);
+        setPendingScan(null);
+        setTimeout(() => scanRef.current?.focus(), 100);
     };
 
     const handleClearClick = () => {
@@ -1542,6 +1577,38 @@ const MobileSend = () => {
 
                     <CButton color="danger" onClick={confirmDelete}>
                         Delete
+                    </CButton>
+                </CModalFooter>
+            </CModal>
+
+            {/* ✅ CUSTOMER MISMATCH CONFIRMATION MODAL (Receive scan) */}
+            <CModal
+                visible={showCustomerMismatchModal}
+                onClose={handleMismatchConfirmNo}
+                alignment="center"
+                backdrop="static"
+            >
+                <CModalHeader className="border-0 text-center">
+                    <CModalTitle className="w-100 text-warning fw-bold">
+                        ⚠ Customer Mismatch
+                    </CModalTitle>
+                </CModalHeader>
+
+                <CModalBody className="text-center">
+                    <p>{pendingScan?.message}</p>
+                    {pendingScan?.belongsToCustomerName && (
+                        <p>
+                            Belongs to: <b>{pendingScan.belongsToCustomerName}</b>
+                        </p>
+                    )}
+                </CModalBody>
+
+                <CModalFooter className="border-0 d-flex justify-content-center gap-2">
+                    <CButton color="secondary" onClick={handleMismatchConfirmNo}>
+                        No
+                    </CButton>
+                    <CButton color="warning" onClick={handleMismatchConfirmYes}>
+                        Yes
                     </CButton>
                 </CModalFooter>
             </CModal>
